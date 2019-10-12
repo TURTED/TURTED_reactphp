@@ -10,6 +10,9 @@ use React\Http\Server;
 use React\Stream\ThroughStream;
 use TurtedServer\Entity\Connection;
 use TurtedServer\Handler\PushHandler;
+use TurtedServer\Keeper\ConnectionKeeper;
+use TurtedServer\Keeper\UserConnectionKeeper;
+use TurtedServer\Server\Resolver;
 
 class TurtedServer
 {
@@ -41,7 +44,7 @@ class TurtedServer
     /**
      * @var UserConnectionKeeper
      */
-    private $userConnectionHandler;
+    private $userConnectionKeeper;
 
     public function __construct($config)
     {
@@ -74,8 +77,9 @@ class TurtedServer
         }
 
         $this->connectionKeeper = new ConnectionKeeper();
-        $this->userConnectionHandler = new UserConnectionKeeper();
-        $this->pushHandler = new PushHandler();
+        $this->userConnectionKeeper = new UserConnectionKeeper();
+        $this->resolver = new Resolver($this->connectionKeeper, $this->userConnectionKeeper);
+        $this->pushHandler = new PushHandler($this->resolver);
     }
 
     private function handleRequest(ServerRequestInterface $request)
@@ -105,7 +109,7 @@ class TurtedServer
         $connection = new Connection();
         $this->connectionKeeper->add($connection);
         if ($username) {
-            $this->userConnectionHandler->add($username, $connection);
+            $this->userConnectionKeeper->add($username, $connection);
         }
 
         // Register a ping on the connection
@@ -156,12 +160,12 @@ class TurtedServer
         $memory = memory_get_usage() / 1024;
         $formatted = number_format($memory, 3).'K';
         echo "Current memory usage: {$formatted}\n";
-        echo $this->connectionHandler->count()." connections\n";
+        echo $this->connectionKeeper->count()." connections\n";
 
 
-        $users = $this->userConnectionHandler->getUsers();
+        $users = $this->userConnectionKeeper->getUsers();
         foreach ($users as $user) {
-            $connections = $this->userConnectionHandler->getUserConnections($user);
+            $connections = $this->userConnectionKeeper->getUserConnections($user);
             echo $user.': '.count($connections).PHP_EOL;
             /** @var ThroughStream $stream */
             foreach ($connections as $connection) {

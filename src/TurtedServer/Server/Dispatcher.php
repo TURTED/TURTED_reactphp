@@ -4,13 +4,18 @@
 namespace TurtedServer\Server;
 
 
+use TurtedServer\Entity\Connection;
 use TurtedServer\Entity\Dispatch;
 
 class Dispatcher
 {
 
-    public function dispatch(Dispatch $dispatch) {
-        foreach ($dispatch->getConnections as $connection)
-    }
+    public function dispatch(Dispatch $dispatch)
+    {
+        /** @var Connection $connection */
+        foreach ($dispatch->getTargetConnections() as $connection) {
+            $connection->write();
 
+        }
+    }
 }

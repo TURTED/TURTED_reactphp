@@ -6,7 +6,6 @@ namespace TurtedServer\Entity;
 
 use Evenement\EventEmitter;
 use React\Stream\ThroughStream;
-use Turted\Server\Dispatch;
 
 class Connection extends EventEmitter
 {
@@ -51,13 +50,21 @@ class Connection extends EventEmitter
 
     public function send(Dispatch $dispatch)
     {
-        $this->stream->write('event: '.(string)$dispatch->getEvent().PHP_EOL);
-        $this->stream->write('data: '.json_encode($dispatch->getPayload()).PHP_EOL.PHP_EOL);
+        if ($dispatch->getEvent() !== '') {
+            return;
+        }
+        $this->write('event: '.(string)$dispatch->getEvent().PHP_EOL);
+        $this->write('data: '.json_encode($dispatch->getPayload()).PHP_EOL.PHP_EOL);
     }
 
     public function ping()
     {
-        $this->stream->write('event: ping'.PHP_EOL);
-        $this->stream->write('data: {}'.PHP_EOL.PHP_EOL);
+        $this->write('event: ping'.PHP_EOL);
+        $this->write('data: {}'.PHP_EOL.PHP_EOL);
+    }
+
+    public function write($data)
+    {
+        $this->stream->write($data);
     }
 }
