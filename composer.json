@@ -1,0 +1,30 @@
+{
+  "name": "turted/server-reactphp",
+  "description": "TURTED server implementation in reactphp",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Peter Dietrich",
+      "email": "xosofox@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^5.5.3 || ^7.0",
+    "react/react": "^1.0",
+    "react/http": "^0.8.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.5"
+  }
+}

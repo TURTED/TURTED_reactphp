@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+        <h1>Hi</h1>
+        <button onclick="post()">Post</button>
+        <div id="load"></div>
+        <div id="eventList"></div>
+
+        <script type="text/javascript">
+
+            var events = [];
+            var evtSource;
+            var retries = 0;
+
+            var eventList = document.getElementById('eventList');
+
+            function add(data) {
+                const newElement = document.createElement('li');
+                const json = JSON.parse(data);
+                events.push(json);
+                if (events.length > 5) {
+                    events.shift();
+                }
+                render();
+                document.getElementById('load').innerText = JSON.stringify(json.load);
+            }
+
+            function connect() {
+                console.log('New connect');
+                evtSource = new EventSource('/sse/stream');
+                evtSource.addEventListener('ping', function(event) {
+                    add(event.data);
+                });
+                evtSource.addEventListener('open', function(event) {
+                    console.log('Verbunden');
+                    retries = 0;
+                });
+                // evtSource.addEventListener('error', function(err) {
+                //     console.error(err);
+                //     evtSource.close();
+                //     reconnect();
+                // });
+            }
+
+            function reconnect() {
+                console.log('Retries', retries);
+                retries++;
+                let timeout = Math.pow(2, retries);
+                timeout = timeout > 16 ? 16 : timeout;
+                console.log(timeout);
+                setTimeout(connect, timeout * 1000);
+            }
+
+            function post() {
+                fetch('/sse/push', {
+                    'method': 'post',
+                    'body': JSON.stringify({
+                        'msg': 'Lalala',
+                    }),
+                }).then((data) => {
+                    // console.log(data);
+                });
+            }
+
+            function render() {
+                eventList.innerText = '';
+                events.forEach((e) => {
+                    var li = document.createElement('li');
+                    li.innerHTML = 'ping at ' + e.time;
+                    eventList.appendChild(li);
+                });
+            }
+
+            connect();
+        </script>
+    </body>
+</html>
