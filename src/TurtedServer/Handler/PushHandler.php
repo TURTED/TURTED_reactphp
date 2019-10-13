@@ -7,6 +7,7 @@ namespace TurtedServer\Handler;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use TurtedServer\Entity\Dispatch;
+use TurtedServer\Server\Dispatcher;
 use TurtedServer\Server\Resolver;
 
 class PushHandler
@@ -32,6 +33,7 @@ class PushHandler
         var_dump($data);
         $dispatch = Dispatch::createFromData($data);
         $this->resolver->resolve($dispatch);
+        $dispatcher = new Dispatcher();
         $dispatcher->dispatch($dispatch);
 
         return new Response(200, [], 'ok');

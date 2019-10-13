@@ -50,10 +50,14 @@ class Connection extends EventEmitter
 
     public function send(Dispatch $dispatch)
     {
-        if ($dispatch->getEvent() !== '') {
+        echo 'Dispatch to '.$this->id.' ';
+        if ((string)$dispatch->getEvent() === '') {
+            echo ' cancelled'.PHP_EOL;
+
             return;
         }
         $this->write('event: '.(string)$dispatch->getEvent().PHP_EOL);
+        echo (string)$dispatch->getEvent().PHP_EOL;
         $this->write('data: '.json_encode($dispatch->getPayload()).PHP_EOL.PHP_EOL);
     }
 

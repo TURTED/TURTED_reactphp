@@ -14,8 +14,7 @@ class Dispatcher
     {
         /** @var Connection $connection */
         foreach ($dispatch->getTargetConnections() as $connection) {
-            $connection->write();
-
+            $connection->send($dispatch);
         }
     }
 }
