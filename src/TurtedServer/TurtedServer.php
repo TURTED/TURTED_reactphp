@@ -78,10 +78,11 @@ class TurtedServer
 
         // if it is a call to /push, handle it. Everything else will go to event stream
         if (($path === '/push') || ($path === '/push/')) {
-            $pushHandler = new PushHandler($this->resolver);
+            $pushHandler = new PushHandler($this->config, $this->resolver);
 
             return $pushHandler->handlePush($request);
         }
+
 
 
         $username = '';
@@ -117,9 +118,10 @@ class TurtedServer
         ];
         $origin = $request->getHeaders()['Origin'];
 
-        if ($this->isOriginAllowed($origin)) {
-            $headers['Access-Control-Allow-Origin'] = $origin;
-        }
+        // if ($this->isOriginAllowed($origin)) {
+        $headers['Access-Control-Allow-Origin'] = $origin;
+
+        // }
 
         return new Response(200, $headers, $connection->getStream());
     }
