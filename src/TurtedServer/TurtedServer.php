@@ -71,10 +71,8 @@ class TurtedServer
         if (!$this->config->userResolver) {
             $msg = 'No User Resolver configured. Server will not be able to handle names connections';
             if ($this->config->logger) {
-                echo "WIR HABENEINEN LOGGER";
                 $this->config->logger->warning($msg);
             } else {
-                var_dump($this->config->logger);
                 echo $msg.PHP_EOL.PHP_EOL;
             }
         }
