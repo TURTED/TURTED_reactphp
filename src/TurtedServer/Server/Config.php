@@ -4,6 +4,8 @@
 namespace TurtedServer\Server;
 
 
+use Psr\Log\LoggerInterface;
+
 class Config
 {
     /** @var integer */
@@ -21,6 +23,9 @@ class Config
     /** @var callable|null */
     public $authHandler;
 
+    /** @var LoggerInterface */
+    public $logger;
+
     public static function fromArray($config)
     {
         $defaults = [
@@ -29,6 +34,7 @@ class Config
             'user_resolver' => null,
             'allow_origin' => '*',
             'auth_handler' => null,
+            'logger' => null,
         ];
 
         $config = array_merge($defaults, $config);
@@ -43,6 +49,7 @@ class Config
         $obj->userResolver = $config['user_resolver'];
         $obj->allowOrigin = $config['allow_origin'];
         $obj->authHandler = $config['auth_handler'];
+        $obj->logger = $config['logger'];
 
         return $obj;
     }
