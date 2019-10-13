@@ -32,7 +32,7 @@ class ConnectionKeeper
      */
     public function remove(Connection $connection)
     {
-        echo "Weg 1".PHP_EOL;
+        // echo "Weg 1".PHP_EOL;
         $id = $connection->getId();
         if (isset($this->connections[$id])) {
             unset($this->connections[$id]);

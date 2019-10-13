@@ -12,7 +12,7 @@ class UserConnectionKeeper
 
     public function add($username, Connection $connection)
     {
-        echo 'Add conn for ', $username.PHP_EOL;
+        // echo 'Add conn for ', $username.PHP_EOL;
 
         if (!isset($this->users[$username])) {
             $this->users[$username] = [];
@@ -28,7 +28,8 @@ class UserConnectionKeeper
 
     public function remove($username, Connection $connection)
     {
-        echo 'Remove connection '.$connection->getId().' for '.$username.PHP_EOL;
+        // echo 'Remove connection '.$connection->getId().' for '.$username.PHP_EOL;
+
         // & or we wont work on the original array
         $connections = &$this->users[$username];
         $id = $connection->getId();
