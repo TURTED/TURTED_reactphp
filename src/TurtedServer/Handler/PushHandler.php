@@ -30,12 +30,16 @@ class PushHandler
         }
         $data = json_decode($body, true);
         // @TODO check auth
+
         var_dump($data);
         $dispatch = Dispatch::createFromData($data);
         $this->resolver->resolve($dispatch);
         $dispatcher = new Dispatcher();
         $dispatcher->dispatch($dispatch);
+        $headers = [
+            'Access-Control-Allow-Origin' => '*',
+        ];
 
-        return new Response(200, [], 'ok');
+        return new Response(200, $headers, 'ok');
     }
 }

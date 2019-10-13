@@ -6,8 +6,45 @@
 </head>
 <body>
 
+<form id="form">
+    <input id="msg">
+    <button>Send</button>
+</form>
+
+<ul id="list"></ul>
+<div id="ping"></div>
+
 <script type="text/javascript">
-    var es = new EventSource('http://192.168.0.50:19195');
+    var es = new EventSource('http://127.0.0.1:19195');
+
+    es.addEventListener('ping', function() {
+        var el = document.getElementById('ping')
+        el.innerText = 'Last Ping: ' + (new Date()).toLocaleTimeString();
+    });
+
+    es.addEventListener('message', function(messageEvent) {
+        var list = document.getElementById('list');
+        console.log(messageEvent.data);
+        var json = JSON.parse(messageEvent.data);
+        list.insertAdjacentHTML('beforeend', '<li>' + json.msg + '</li>');
+    });
+
+    var form = document.getElementById('form');
+    form.addEventListener('submit', function send(evt) {
+        var el = document.getElementById('msg');
+        var text = el.value;
+        fetch('http://127.0.0.1:19195/push', {
+            method: 'post',
+            body: JSON.stringify({
+                event: 'message',
+                targets: {broadcast: 1},
+                payload: {msg: text},
+            }),
+        });
+        evt.preventDefault();
+        el.value = '';
+        return false;
+    });
 </script>
 
 </body>

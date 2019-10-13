@@ -14,6 +14,9 @@ $server = new TurtedServer(
         'port' => 19195,
         'user_resolver' => [$userResolver, 'getUserForRequest'],
         'base_url' => 'sse',
+        'allow_origin' > '*',
+        // 'allow_origin' > ['http://127.0.0.1:8080'],
+        // 'allow_origin' > ['https://www.example.com'],
     ]
 );
 

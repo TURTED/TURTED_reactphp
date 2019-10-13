@@ -9,28 +9,15 @@ use React\Http\Response;
 use React\Http\Server;
 use React\Stream\ThroughStream;
 use TurtedServer\Entity\Connection;
+use TurtedServer\Handler\OptionsHandler;
 use TurtedServer\Handler\PushHandler;
 use TurtedServer\Keeper\ConnectionKeeper;
 use TurtedServer\Keeper\UserConnectionKeeper;
+use TurtedServer\Server\Config;
 use TurtedServer\Server\Resolver;
 
 class TurtedServer
 {
-    /**
-     * @var int
-     */
-    private $port;
-
-    private $connections = [];
-
-    /**
-     * @var callable
-     */
-    private $userResolver = null;
-
-    /** @var string */
-    private $baseUrl;
-
     /**
      * @var \React\EventLoop\LoopInterface
      */
@@ -46,63 +33,60 @@ class TurtedServer
      */
     private $userConnectionKeeper;
 
-    public function __construct($config)
+    /**
+     * @var Config
+     */
+    private $config;
+
+    /**
+     * @var Resolver
+     */
+    private $resolver;
+
+    public function __construct(array $config = [])
     {
-        if (is_numeric($config)) {
-            $this->port = (int)$config;
-        } else {
-            if (isset($config['port'])) {
-                $this->port = (int)$config['port'];
-            }
-        }
-
         if (isset($config['user_resolver'])) {
-            if (is_callable($config['user_resolver'])) {
-                $this->userResolver = $config['user_resolver'];
-            } else {
-                var_dump($config['user_resolver']);
-                echo 'Given user resolver is not callable'.PHP_EOL.PHP_EOL;
+            if (!is_callable($config['user_resolver'])) {
+                throw new \Exception('Given user resolver is not callable');
             }
         }
-        if (!$this->userResolver) {
+
+        $this->config = Config::fromArray($config);
+        if (!$this->config->userResolver) {
             echo 'No User Resolver configured. Server will not be able to handle names connections'.PHP_EOL.PHP_EOL;
-        }
-
-        if ($this->port <= 0) {
-            $this->port = 19195;
-        }
-
-        if (isset($config['base_url'])) {
-            $this->baseUrl = $config['base_url'];
         }
 
         $this->connectionKeeper = new ConnectionKeeper();
         $this->userConnectionKeeper = new UserConnectionKeeper();
         $this->resolver = new Resolver($this->connectionKeeper, $this->userConnectionKeeper);
-        $this->pushHandler = new PushHandler($this->resolver);
     }
 
     private function handleRequest(ServerRequestInterface $request)
     {
-        var_dump($request->getCookieParams());
         $uri = $request->getUri();
-        $path = str_replace($this->baseUrl, '', $uri->getPath());
+        $path = str_replace($this->config->baseUrl, '', $uri->getPath());
         $path = str_replace('//', '/', $path);
         if ($path === '') {
             $path = '/';
         }
-        var_dump($path);
+
+        if ($request->getMethod() === 'OPTIONS') {
+            $handler = new OptionsHandler($this->config);
+
+            return $handler->handle($request);
+        }
 
         // if it is a call to /push, handle it. Everything else will go to event stream
         if (($path === '/push') || ($path === '/push/')) {
+            $pushHandler = new PushHandler($this->resolver);
 
-            return $this->pushHandler->handlePush($request);
+            return $pushHandler->handlePush($request);
         }
 
 
         $username = '';
-        if ($this->userResolver) {
-            $username = call_user_func($this->userResolver, $request);
+        if ($this->config->userResolver) {
+            $username = call_user_func($this->config->userResolver, $request);
             echo 'Username: '.$username.PHP_EOL;
         }
 
@@ -127,7 +111,15 @@ class TurtedServer
         var_dump('Last ID: '.$id);
         $connection->write('as'.PHP_EOL);
         $connection->write('retry: 8000'.PHP_EOL);
-        $headers = ['Cache-Control' => 'no-cache', 'Content-Type' => 'text/event-stream',];
+        $headers = [
+            'Cache-Control' => 'no-cache',
+            'Content-Type' => 'text/event-stream',
+        ];
+        $origin = $request->getHeaders()['Origin'];
+
+        if ($this->isOriginAllowed($origin)) {
+            $headers['Access-Control-Allow-Origin'] = $origin;
+        }
 
         return new Response(200, $headers, $connection->getStream());
     }
@@ -135,7 +127,7 @@ class TurtedServer
     public function start()
     {
         $this->loop = Factory::create();
-        $port = '0.0.0.0:'.$this->port;
+        $port = '0.0.0.0:'.$this->config->port;
 
         $http = new Server(
             function (ServerRequestInterface $request) {
