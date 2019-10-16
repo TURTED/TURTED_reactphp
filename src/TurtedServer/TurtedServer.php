@@ -12,6 +12,7 @@ use React\Stream\ThroughStream;
 use TurtedServer\Entity\Connection;
 use TurtedServer\Exceptions\InvalidLoggerException;
 use TurtedServer\Exceptions\NotCallableException;
+use TurtedServer\Handler\ConnectionHandler;
 use TurtedServer\Handler\OptionsHandler;
 use TurtedServer\Handler\PushHandler;
 use TurtedServer\Keeper\ConnectionKeeper;
@@ -114,49 +115,9 @@ class TurtedServer
             return $pushHandler->handlePush($request);
         }
 
+        $connectionHandler = new ConnectionHandler($this->config, $this->connectionKeeper, $this->userConnectionKeeper, $this->loop);
+        return $connectionHandler->handle($request);
 
-        $username = '';
-        if ($this->config->userResolver) {
-            $username = call_user_func($this->config->userResolver, $request);
-            echo 'Username: '.$username.PHP_EOL;
-        }
-
-        $connection = new Connection();
-        $this->connectionKeeper->add($connection);
-        if ($username) {
-            $this->userConnectionKeeper->add($username, $connection);
-        }
-
-        // Register a ping on the connection
-        $pingTimer = $this->loop->addPeriodicTimer(28, [$connection, 'ping']);
-
-        $connection->on(
-            'close',
-            function () use ($pingTimer) {
-                $this->loop->cancelTimer($pingTimer);
-            }
-        );
-
-
-        $id = $request->getHeaderLine('Last-Event-ID');
-        var_dump('Last ID: '.$id);
-        $connection->write('as'.PHP_EOL);
-        $connection->write('retry: 8000'.PHP_EOL);
-        $headers = [
-            'Cache-Control' => 'no-cache',
-            'Content-Type' => 'text/event-stream',
-        ];
-        $requestHeaders = $request->getHeaders();
-        if (isset($requestHeaders['Origin'])) {
-            $headers['Access-Control-Allow-Origin'] = $requestHeaders['Origin'];
-        }
-
-        // if ($this->isOriginAllowed($origin)) {
-        $headers['Access-Control-Allow-Origin'] = $origin;
-
-        // }
-
-        return new Response(200, $headers, $connection->getStream());
     }
 
     public function start()
