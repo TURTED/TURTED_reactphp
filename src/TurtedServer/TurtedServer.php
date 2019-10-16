@@ -89,6 +89,7 @@ class TurtedServer
         $this->connectionKeeper = new ConnectionKeeper();
         $this->userConnectionKeeper = new UserConnectionKeeper();
         $this->resolver = new Resolver($this->connectionKeeper, $this->userConnectionKeeper);
+        $this->loop = Factory::create();
     }
 
     private function handleRequest(ServerRequestInterface $request)
@@ -145,7 +146,10 @@ class TurtedServer
             'Cache-Control' => 'no-cache',
             'Content-Type' => 'text/event-stream',
         ];
-        $origin = $request->getHeaders()['Origin'];
+        $requestHeaders = $request->getHeaders();
+        if (isset($requestHeaders['Origin'])) {
+            $headers['Access-Control-Allow-Origin'] = $requestHeaders['Origin'];
+        }
 
         // if ($this->isOriginAllowed($origin)) {
         $headers['Access-Control-Allow-Origin'] = $origin;
@@ -157,7 +161,6 @@ class TurtedServer
 
     public function start()
     {
-        $this->loop = Factory::create();
         $port = '0.0.0.0:'.$this->config->port;
 
         $http = new Server(
